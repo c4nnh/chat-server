@@ -1,13 +1,11 @@
-import { IsNotEmpty, IsString, Matches } from 'class-validator'
+import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator'
 
 export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   name: string
 
-  @Matches(/^.+@\..+$/, {
-    message: 'Email must be in format',
-  })
+  @IsEmail()
   email: string
 
   @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/, {
