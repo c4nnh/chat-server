@@ -18,10 +18,8 @@ import { RegisterResponse } from './response/register.response'
 
 const select = {
   id: true,
-  role: true,
+  name: true,
   password: true,
-  firstName: true,
-  lastName: true,
   image: true,
 }
 
