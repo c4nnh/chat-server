@@ -36,7 +36,10 @@ export class AuthService {
       where: { email: dto.email },
     })
     if (checkEmail)
-      throw new ConflictException('This email has already been taken')
+      throw new ConflictException(
+        'This email has already been taken',
+        'Duplicate email'
+      )
     const user = await this.prisma.user.create({
       data: {
         ...dto,
