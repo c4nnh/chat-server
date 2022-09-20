@@ -59,5 +59,6 @@ model UserConversation {
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   conversationId String
 
+  @@unique([conversationId, userId])
   @@map("user_conversation")
 }
