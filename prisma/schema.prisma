@@ -22,6 +22,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   userConversations UserConversation[]
+  messages          Message[]
 
   @@map("user")
 }
@@ -36,6 +37,7 @@ model Conversation {
   updatedAt DateTime @updatedAt
 
   userConversations UserConversation[]
+  messages          Message[]
 
   @@map("conversation")
 }
@@ -61,4 +63,19 @@ model UserConversation {
 
   @@unique([conversationId, userId])
   @@map("user_conversation")
+}
+
+model Message {
+  id String @id @default(uuid())
+
+  content String
+
+  createdAt DateTime @default(now())
+
+  creator        User         @relation(fields: [userId], references: [id])
+  userId         String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+
+  @@map("message")
 }
