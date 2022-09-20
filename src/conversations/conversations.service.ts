@@ -30,16 +30,36 @@ export class ConversationsService {
         skip,
         take,
         where,
-        select: {
-          id: true,
-          name: true,
-          image: true,
+        include: {
+          messages: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            include: {
+              creator: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+            take: 1,
+          },
         },
       }),
     ])
 
     return {
-      data: companies,
+      data: companies.map(item => {
+        const { id, name, image, messages } = item
+        return {
+          id,
+          name,
+          image,
+          lastMessage: messages.length ? messages[0] : undefined,
+        }
+      }),
       pagination: convertToPaginationResponse(total, take),
     }
   }

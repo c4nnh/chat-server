@@ -6,6 +6,7 @@ import { DbModule } from './db/db.module'
 import { UsersModule } from './users/users.module'
 import { AuthModule } from './auth/auth.module'
 import { ConversationsModule } from './conversations/conversations.module';
+import { GatewayModule } from './gateway/gateway.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ConversationsModule } from './conversations/conversations.module';
     UsersModule,
     AuthModule,
     ConversationsModule,
+    GatewayModule,
   ],
   controllers: [AppController],
   providers: [AppService],
