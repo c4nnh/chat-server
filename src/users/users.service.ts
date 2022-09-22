@@ -27,9 +27,6 @@ export class UsersService {
     const { offset: skip, limit: take, email } = query
 
     const where: Prisma.UserWhereInput = {
-      id: {
-        not: userId,
-      },
       email: {
         contains: email,
         mode: 'insensitive',

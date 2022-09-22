@@ -5,8 +5,10 @@ import { AppService } from './app.service'
 import { DbModule } from './db/db.module'
 import { UsersModule } from './users/users.module'
 import { AuthModule } from './auth/auth.module'
-import { ConversationsModule } from './conversations/conversations.module';
-import { GatewayModule } from './gateway/gateway.module';
+import { ConversationsModule } from './conversations/conversations.module'
+import { GatewayModule } from './gateway/gateway.module'
+import { MessagesModule } from './messages/messages.module'
+import { EventEmitterModule } from '@nestjs/event-emitter'
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { GatewayModule } from './gateway/gateway.module';
     AuthModule,
     ConversationsModule,
     GatewayModule,
+    MessagesModule,
+    EventEmitterModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],
