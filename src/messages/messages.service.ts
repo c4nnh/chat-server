@@ -40,7 +40,7 @@ export class MessagesService {
 
     const { content, conversationId } = dto
 
-    return this.prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         content,
         conversationId,
@@ -56,6 +56,10 @@ export class MessagesService {
         },
       },
     })
+
+    this.eventEmitter.emit('message.created', message)
+
+    return message
   }
 
   getMany = async (

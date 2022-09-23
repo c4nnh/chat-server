@@ -96,7 +96,7 @@ export class ConversationsService {
           data: {},
         })
         await _prisma.userConversation.createMany({
-          data: dto.userIds.map(uid => ({
+          data: [...dto.userIds, userId].map(uid => ({
             userId: uid,
             conversationId: conversation.id,
             role:
