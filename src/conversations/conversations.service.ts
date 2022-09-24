@@ -19,7 +19,7 @@ export class ConversationsService {
     userId: string,
     query: GetConversationsArgs
   ): Promise<GetConversationsResponse> => {
-    const { offset: skip, limit: take } = query
+    const { offset, limit } = query
 
     const where = {
       userConversations: {
@@ -33,44 +33,78 @@ export class ConversationsService {
       this.prisma.conversation.count({
         where,
       }),
-      this.prisma.conversation.findMany({
-        skip,
-        take,
-        where,
-        include: {
-          messages: {
-            orderBy: {
-              createdAt: 'desc',
-            },
-            include: {
-              creator: {
-                select: {
-                  id: true,
-                  name: true,
-                  image: true,
-                },
-              },
-            },
-            take: 1,
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
+      this.prisma.$queryRaw`
+        SELECT 
+        	c.id, c.image, c.name, 
+        	"mId", "mContent", "mCreatedAt",
+        	m."uId", "uName", "uImage"
+        FROM 
+          conversation c,
+          user_conversation uc,
+          (
+            SELECT
+              message.id AS "mId",
+              message.content AS "mContent",
+              message."createdAt" AS "mCreatedAt",
+              message."conversationId",
+              u.id AS "uId",
+              u.name AS "uName",
+              u.image AS "uImage"
+            FROM 
+              message, "user" u,
+              (	
+                SELECT  
+                  "conversationId", MAX(message."createdAt") AS "maxCreatedAt"
+                FROM 
+                  message
+                GROUP BY 
+                  "conversationId"
+              ) t2
+            WHERE
+              message."userId" = u.id
+              AND message."conversationId" = t2."conversationId"
+              AND message."createdAt" = t2."maxCreatedAt"
+          ) m
+          WHERE
+            uc."userId" = ${userId}
+            AND uc."conversationId" = c.id
+            AND m."conversationId" = c.id
+          ORDER BY "mCreatedAt" DESC
+          LIMIT ${limit}
+          OFFSET ${offset}
+      `,
     ])
 
     return {
-      data: companies.map(item => {
-        const { id, name, image, messages } = item
+      data: (companies as any).map(item => {
+        const {
+          id,
+          name,
+          image,
+          mId,
+          mContent,
+          mCreatedAt,
+          uId,
+          uName,
+          uImage,
+        } = item
         return {
           id,
           name,
           image,
-          lastMessage: messages.length ? messages[0] : undefined,
+          lastMessage: {
+            id: mId,
+            content: mContent,
+            createdAt: mCreatedAt,
+            creator: {
+              id: uId,
+              name: uName,
+              image: uImage,
+            },
+          },
         }
       }),
-      pagination: convertToPaginationResponse(total, take),
+      pagination: convertToPaginationResponse(total, limit),
     }
   }
 

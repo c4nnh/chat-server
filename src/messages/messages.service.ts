@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common'
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Prisma } from '@prisma/client'
 import { convertToPaginationResponse } from '../common/helpers'
@@ -14,6 +18,15 @@ export class MessagesService {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2
   ) {}
+
+  private checkConversationExist = async (id: string) => {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id },
+    })
+    if (!conversation) {
+      throw new NotFoundException('This conversation does not exist')
+    }
+  }
 
   private checkUserInConversation = async (
     userId: string,
@@ -36,6 +49,7 @@ export class MessagesService {
     userId: string,
     dto: CreateMessageDto
   ): Promise<CreateMessageResponse> => {
+    await this.checkConversationExist(dto.conversationId)
     await this.checkUserInConversation(userId, dto.conversationId)
 
     const { content, conversationId } = dto
@@ -68,6 +82,7 @@ export class MessagesService {
   ): Promise<GetMessagesResponse> => {
     const { offset: skip, limit: take, conversationId } = query
 
+    await this.checkConversationExist(query.conversationId)
     await this.checkUserInConversation(userId, query.conversationId)
 
     const where: Prisma.MessageWhereInput = {
