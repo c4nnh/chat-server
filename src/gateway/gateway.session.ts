@@ -7,21 +7,31 @@ import { AuthenticatedSocket } from './entities/authenticated-socket.entity'
 
 @Injectable()
 export class GatewaySessionManager {
-  private readonly sessions: Map<string, AuthenticatedSocket> = new Map()
+  private readonly sessions: Map<string, AuthenticatedSocket[]> = new Map()
 
-  getSocket(userId: string): AuthenticatedSocket {
-    return this.sessions.get(userId)
+  getSocketsByUsers(userIds: string[]): AuthenticatedSocket[] {
+    return userIds.map(item => this.sessions.get(item)).flat()
   }
 
   setSocket(userId: string, socket: AuthenticatedSocket) {
-    this.sessions.set(userId, socket)
+    const oldSockets = this.getSocketsByUsers([userId])
+
+    this.sessions.set(userId, [...(oldSockets || []), socket])
   }
 
-  deleteSocket(userId: string) {
+  deleteSocket(userId: string, socketId: string) {
+    const oldSockets = this.getSocketsByUsers([userId])
+    this.sessions.set(
+      userId,
+      (oldSockets || []).filter(item => item.id !== socketId)
+    )
+  }
+
+  deleteSession(userId: string) {
     this.sessions.delete(userId)
   }
 
-  getSockets(): Map<string, AuthenticatedSocket> {
+  getAllSockets(): Map<string, AuthenticatedSocket[]> {
     return this.sessions
   }
 }

@@ -27,11 +27,15 @@ export class WebsocketAdapter extends IoAdapter {
       if (!match || !match.groups.token)
         return next(new UnauthorizedException('Token is invalid'))
 
-      const user: TokenPayload = this.authService.verifyToken(
-        match.groups.token
-      )
-      socket.user = user as unknown as UserEntity
-      next()
+      try {
+        const user: TokenPayload = this.authService.verifyToken(
+          match.groups.token
+        )
+        socket.user = user as unknown as UserEntity
+        next()
+      } catch {
+        next(new UnauthorizedException('Token is invalid'))
+      }
     })
     return server
   }

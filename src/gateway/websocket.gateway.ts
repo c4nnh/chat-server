@@ -1,5 +1,8 @@
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets'
@@ -10,6 +13,7 @@ import { GatewaySessionManager } from './gateway.session'
 import { Inject } from '@nestjs/common'
 import { MessageEntity } from '../messages/entities/message.entity'
 import { ConversationEntity } from '../conversations/entities/conversation.entity'
+import { PrismaService } from '../db/prisma.service'
 
 @WebSocketGateway({
   cors: {
@@ -19,10 +23,11 @@ import { ConversationEntity } from '../conversations/entities/conversation.entit
 export class MessagingGateway implements OnGatewayConnection {
   constructor(
     @Inject('GatewaySessionManager')
-    private readonly sessions: GatewaySessionManager
+    private readonly sessions: GatewaySessionManager,
+    private readonly prisma: PrismaService
   ) {}
 
-  handleConnection(socket: AuthenticatedSocket, ...args: any[]) {
+  handleConnection(socket: AuthenticatedSocket) {
     this.sessions.setSocket(socket.user.id, socket)
   }
 
@@ -30,12 +35,62 @@ export class MessagingGateway implements OnGatewayConnection {
   server: Server
 
   @OnEvent('conversation.created')
-  handleConversationCreatedEvent(payload: ConversationEntity) {
-    this.server.emit('onConversation', payload)
+  handleConversationCreatedEvent(conversation: ConversationEntity) {
+    this.server.emit('onConversation', conversation)
   }
 
   @OnEvent('message.created')
-  handleMessageCreatedEvent(payload: MessageEntity) {
-    this.server.emit('onMessage', payload)
+  async handleMessageCreatedEvent(message: MessageEntity) {
+    const usersInConversation = await this.prisma.userConversation.findMany({
+      where: {
+        conversationId: message.conversationId,
+      },
+      select: {
+        userId: true,
+      },
+    })
+
+    const sockets = this.sessions.getSocketsByUsers(
+      usersInConversation.map(item => item.userId)
+    )
+
+    sockets.forEach(item => !!item && item.emit('onMessage', message))
+
+    this.server
+      .to(`conversation-${message.conversationId}`)
+      .emit('onMessage', message)
+  }
+
+  @SubscribeMessage('onJoinConversation')
+  onJoinConversation(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: { conversationId: string }
+  ) {
+    socket.join(`conversation-${data.conversationId}`)
+  }
+
+  @SubscribeMessage('onLeaveConversation')
+  onLeaveConversation(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: { conversationId: string }
+  ) {
+    socket.leave(`conversation-${data.conversationId}`)
+  }
+
+  @SubscribeMessage('onTypingStart')
+  onTypingStart(@MessageBody() data: any) {
+    this.server
+      .to(`conversation-${data.conversationId}`)
+      .emit('onUserTyping', data)
+  }
+
+  @SubscribeMessage('onTypingStop')
+  onTypingStop(
+    @MessageBody() data: { conversationId: string; userId: string }
+  ) {
+    const { conversationId, userId } = data
+    this.server
+      .to(`conversation-${conversationId}`)
+      .emit('onUserStopTyping', { userId })
   }
 }
