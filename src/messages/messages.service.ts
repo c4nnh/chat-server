@@ -68,6 +68,13 @@ export class MessagesService {
             image: true,
           },
         },
+        conversation: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
       },
     })
 

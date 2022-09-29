@@ -1,12 +1,15 @@
 import {
-  MessageBody,
   OnGatewayConnection,
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets'
 import { Server } from 'socket.io'
 import { OnEvent } from '@nestjs/event-emitter'
+import { AuthenticatedSocket } from './entities/authenticated-socket.entity'
+import { GatewaySessionManager } from './gateway.session'
+import { Inject } from '@nestjs/common'
+import { MessageEntity } from '../messages/entities/message.entity'
+import { ConversationEntity } from '../conversations/entities/conversation.entity'
 
 @WebSocketGateway({
   cors: {
@@ -14,25 +17,25 @@ import { OnEvent } from '@nestjs/event-emitter'
   },
 })
 export class MessagingGateway implements OnGatewayConnection {
-  handleConnection(client: any, ...args: any[]) {
-    console.log(client.id)
+  constructor(
+    @Inject('GatewaySessionManager')
+    private readonly sessions: GatewaySessionManager
+  ) {}
+
+  handleConnection(socket: AuthenticatedSocket, ...args: any[]) {
+    this.sessions.setSocket(socket.user.id, socket)
   }
 
   @WebSocketServer()
   server: Server
 
-  @SubscribeMessage('createMessage')
-  handleCreateMessage(@MessageBody() data: any) {
-    console.log('Message created')
-  }
-
   @OnEvent('conversation.created')
-  handleConversationCreatedEvent(payload: any) {
+  handleConversationCreatedEvent(payload: ConversationEntity) {
     this.server.emit('onConversation', payload)
   }
 
   @OnEvent('message.created')
-  handleMessageCreatedEvent(payload: any) {
+  handleMessageCreatedEvent(payload: MessageEntity) {
     this.server.emit('onMessage', payload)
   }
 }

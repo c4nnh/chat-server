@@ -100,8 +100,8 @@ export class AuthService {
   verifyToken = (token: string): TokenPayload => {
     try {
       return this.jwtService.verify(token)
-    } catch {
-      throw new UnauthorizedException('Refresh token is expired')
+    } catch (e) {
+      throw new UnauthorizedException('Token is invalid')
     }
   }
 }

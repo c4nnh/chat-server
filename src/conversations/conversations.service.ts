@@ -152,12 +152,21 @@ export class ConversationsService {
               image: true,
             },
           },
+          conversation: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
         },
       })
 
+      this.eventEmitter.emit('message.created', message)
+
       const res = {
         id: conversation.id,
-        name: '',
+        name: conversation.name,
         image: undefined,
         lastMessage: message,
       }
