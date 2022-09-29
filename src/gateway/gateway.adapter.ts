@@ -2,7 +2,6 @@ import { INestApplicationContext, UnauthorizedException } from '@nestjs/common'
 import { IoAdapter } from '@nestjs/platform-socket.io'
 import { AuthService } from '../auth/auth.service'
 import { TokenPayload } from '../auth/entities/token-payload.entity'
-import { UserEntity } from '../users/entities/user.entity'
 import { AuthenticatedSocket } from './entities/authenticated-socket.entity'
 
 export class WebsocketAdapter extends IoAdapter {
@@ -31,7 +30,7 @@ export class WebsocketAdapter extends IoAdapter {
         const user: TokenPayload = this.authService.verifyToken(
           match.groups.token
         )
-        socket.user = user as unknown as UserEntity
+        socket.user = user
         next()
       } catch {
         next(new UnauthorizedException('Token is invalid'))

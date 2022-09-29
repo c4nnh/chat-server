@@ -120,10 +120,14 @@ export class ConversationsService {
           (
             SELECT "conversationId" FROM user_conversation
             GROUP BY "conversationId"
-            HAVING ARRAY_AGG("userId" ORDER BY "userId") = ${dto.userIds.sort()}
+            HAVING ARRAY_AGG("userId" ORDER BY "userId") = ${[
+              userId,
+              ...dto.userIds,
+            ].sort()}
           ) t2
         WHERE conversation.id = t2."conversationId"
       `
+
       let conversation = conversations.length ? conversations[0] : undefined
       if (!conversation) {
         conversation = await _prisma.conversation.create({
@@ -171,7 +175,10 @@ export class ConversationsService {
         lastMessage: message,
       }
 
-      this.eventEmitter.emit('conversation.created', res)
+      this.eventEmitter.emit('conversation.created', {
+        conversation: res,
+        userIds: [...dto.userIds, userId],
+      })
 
       return res
     })

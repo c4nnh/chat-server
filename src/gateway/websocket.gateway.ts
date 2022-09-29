@@ -28,15 +28,20 @@ export class MessagingGateway implements OnGatewayConnection {
   ) {}
 
   handleConnection(socket: AuthenticatedSocket) {
-    this.sessions.setSocket(socket.user.id, socket)
+    this.sessions.setSocket(socket.user.userId, socket)
   }
 
   @WebSocketServer()
   server: Server
 
   @OnEvent('conversation.created')
-  handleConversationCreatedEvent(conversation: ConversationEntity) {
-    this.server.emit('onConversation', conversation)
+  handleConversationCreatedEvent(payload: {
+    conversation: ConversationEntity
+    userIds: string[]
+  }) {
+    const { conversation, userIds } = payload
+    const sockets = this.sessions.getSocketsByUsers(userIds)
+    sockets.forEach(item => !!item && item.emit('onConversation', conversation))
   }
 
   @OnEvent('message.created')
@@ -53,9 +58,7 @@ export class MessagingGateway implements OnGatewayConnection {
     const sockets = this.sessions.getSocketsByUsers(
       usersInConversation.map(item => item.userId)
     )
-
     sockets.forEach(item => !!item && item.emit('onMessage', message))
-
     this.server
       .to(`conversation-${message.conversationId}`)
       .emit('onMessage', message)
