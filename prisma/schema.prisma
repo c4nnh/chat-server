@@ -24,6 +24,7 @@ model User {
 
   userConversations UserConversation[]
   messages          Message[]
+  roomMembers       RoomMember[]
 
   @@map("user")
 }
@@ -79,4 +80,55 @@ model Message {
   conversationId String
 
   @@map("message")
+}
+
+enum GameType {
+  BUNNY_JUMP
+}
+
+model Game {
+  id String @id @default(uuid())
+
+  name  String
+  type  GameType
+  rooms Room[]
+
+  @@map("game")
+}
+
+model Room {
+  id String @id @default(uuid())
+
+  password String?
+  max      Int     @default(4)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  game        Game         @relation(fields: [gameId], references: [id])
+  gameId      String
+  roomMembers RoomMember[]
+
+  @@map("room")
+}
+
+enum RoomRole {
+  CREATOR
+  MEMBER
+}
+
+model RoomMember {
+  id String @id @default(uuid())
+
+  role    RoomRole @default(MEMBER)
+  isReady Boolean  @default(false)
+
+  joinAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId String
+
+  @@map("room_member")
 }
