@@ -101,7 +101,7 @@ export class AuthService {
     try {
       return this.jwtService.verify(token)
     } catch (e) {
-      throw new UnauthorizedException('Token is invalid')
+      throw new UnauthorizedException('Token is invalid', 'EXPIRED_TOKEN')
     }
   }
 }
