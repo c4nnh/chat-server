@@ -17,7 +17,7 @@ import { PrismaService } from '../db/prisma.service'
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3000'],
+    origin: ['http://localhost:3000', 'http://localhost:3001'],
   },
 })
 export class MessagingGateway implements OnGatewayConnection {
