@@ -99,6 +99,7 @@ model Game {
 model Room {
   id String @id @default(uuid())
 
+  name     String?
   password String?
   max      Int     @default(4)
 
