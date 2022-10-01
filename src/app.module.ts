@@ -9,6 +9,8 @@ import { ConversationsModule } from './conversations/conversations.module'
 import { GatewayModule } from './gateway/gateway.module'
 import { MessagesModule } from './messages/messages.module'
 import { EventEmitterModule } from '@nestjs/event-emitter'
+import { RoomsModule } from './rooms/rooms.module'
+import { GamesModule } from './games/games.module'
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
     GatewayModule,
     MessagesModule,
     EventEmitterModule.forRoot(),
+    RoomsModule,
+    GamesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

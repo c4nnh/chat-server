@@ -17,6 +17,7 @@ export class AuthGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest()
+
     const authHeader: string = request.headers.authorization
     if (!authHeader) {
       throw new UnauthorizedException('You are unauthorized')
