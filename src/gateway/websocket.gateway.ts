@@ -2,6 +2,7 @@ import {
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -20,14 +21,24 @@ import { PrismaService } from '../db/prisma.service'
     origin: ['http://localhost:3000', 'http://localhost:3001'],
   },
 })
-export class MessagingGateway implements OnGatewayConnection {
+export class MessagingGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   constructor(
     @Inject('GatewaySessionManager')
     private readonly sessions: GatewaySessionManager,
     private readonly prisma: PrismaService
   ) {}
 
+  handleDisconnect(socket: AuthenticatedSocket) {
+    console.log('disconnect')
+
+    this.sessions.disconnect(socket.id)
+  }
+
   handleConnection(socket: AuthenticatedSocket) {
+    console.log('connect')
+
     this.sessions.setSocket(socket.user.userId, socket)
   }
 

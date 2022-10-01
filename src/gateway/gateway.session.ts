@@ -19,12 +19,28 @@ export class GatewaySessionManager {
     this.sessions.set(userId, [...(oldSockets || []), socket])
   }
 
+  setSockets(userId: string, sockets: AuthenticatedSocket[]) {
+    this.sessions.set(userId, sockets)
+  }
+
   deleteSocket(userId: string, socketId: string) {
     const oldSockets = this.getSocketsByUsers([userId])
     this.sessions.set(
       userId,
       (oldSockets || []).filter(item => item.id !== socketId)
     )
+  }
+
+  disconnect(socketId: string) {
+    ;[...this.sessions.entries()].forEach(([key, value]) => {
+      if (value.filter(item => item?.id === socketId).length) {
+        const newSockets = value.filter(item => item?.id !== socketId)
+        this.setSockets(key, newSockets)
+        if (!newSockets.filter(item => item).length) {
+          this.deleteSession(key)
+        }
+      }
+    })
   }
 
   deleteSession(userId: string) {
