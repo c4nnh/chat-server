@@ -21,9 +21,9 @@ async function bootstrap() {
     })
   )
 
-  app.use((req, res, next) => {
-    setTimeout(() => next(), 3000)
-  })
+  // app.use((_, __, next) => {
+  //   setTimeout(() => next(), 3000)
+  // })
 
   const config = new DocumentBuilder()
     .setTitle('Chat API')

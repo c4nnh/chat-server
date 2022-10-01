@@ -23,6 +23,7 @@ export class WebsocketAdapter extends IoAdapter {
         return next(new UnauthorizedException('You are unauthorized'))
       }
       const match = authHeader.match(/^Bearer (?<token>.+)$/)
+
       if (!match || !match.groups.token)
         return next(new UnauthorizedException('Token is invalid'))
 

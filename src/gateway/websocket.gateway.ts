@@ -31,14 +31,10 @@ export class MessagingGateway
   ) {}
 
   handleDisconnect(socket: AuthenticatedSocket) {
-    console.log('disconnect')
-
     this.sessions.disconnect(socket.id)
   }
 
   handleConnection(socket: AuthenticatedSocket) {
-    console.log('connect')
-
     this.sessions.setSocket(socket.user.userId, socket)
   }
 
