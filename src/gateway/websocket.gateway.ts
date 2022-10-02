@@ -15,6 +15,8 @@ import { Inject } from '@nestjs/common'
 import { MessageEntity } from '../messages/entities/message.entity'
 import { ConversationEntity } from '../conversations/entities/conversation.entity'
 import { PrismaService } from '../db/prisma.service'
+import { RelationUserEntity } from '../users/entities/relation-user.entity'
+import { RoomRole } from '@prisma/client'
 
 @WebSocketGateway({
   cors: {
@@ -31,7 +33,7 @@ export class MessagingGateway
   ) {}
 
   handleDisconnect(socket: AuthenticatedSocket) {
-    this.sessions.disconnect(socket.id)
+    this.sessions.disconnect(socket.user.userId, socket.id)
   }
 
   handleConnection(socket: AuthenticatedSocket) {
@@ -96,11 +98,101 @@ export class MessagingGateway
 
   @SubscribeMessage('onTypingStop')
   onTypingStop(
-    @MessageBody() data: { conversationId: string; userId: string }
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: { conversationId: string }
   ) {
-    const { conversationId, userId } = data
+    const { conversationId } = data
     this.server
       .to(`conversation-${conversationId}`)
-      .emit('onUserStopTyping', { userId })
+      .emit('onUserStopTyping', { userId: socket.user.userId })
+  }
+
+  @SubscribeMessage('joinWaitingRoom')
+  joinWaitingRoom(@ConnectedSocket() socket: AuthenticatedSocket) {
+    socket.join('waiting-room')
+  }
+
+  @SubscribeMessage('leaveWaitingRoom')
+  leaveWaitingRoom(@ConnectedSocket() socket: AuthenticatedSocket) {
+    socket.leave('waiting-room')
+  }
+
+  @SubscribeMessage('joinRoom')
+  joinRoom(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody()
+    data: { roomId: string }
+  ) {
+    socket.join(`room-${data.roomId}`)
+  }
+
+  @SubscribeMessage('leaveRoom')
+  async leaveRoom(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody()
+    payload: { roomId: string }
+  ) {
+    const { roomId } = payload
+    socket.leave(`room-${roomId}`)
+
+    await this.prisma.$transaction(async _prisma => {
+      await _prisma.roomMember.deleteMany({
+        where: {
+          userId: socket.user.userId,
+          roomId,
+        },
+      })
+      const joinedRooms = await _prisma.roomMember.findMany({
+        where: {
+          roomId,
+        },
+      })
+      if (joinedRooms.length) {
+        await _prisma.roomMember.update({
+          where: {
+            id: joinedRooms[0].id,
+          },
+          data: {
+            role: 'CREATOR',
+          },
+        })
+        this.server.to(`room-${roomId}`).emit('onUserLeaveRoom', {
+          userId: socket.user.userId,
+          newCreatorId: joinedRooms[0].userId,
+        })
+      } else {
+        const room = await this.prisma.room.findUnique({
+          where: { id: roomId },
+        })
+        if (room) {
+          await _prisma.room.delete({
+            where: {
+              id: roomId,
+            },
+          })
+          this.server.to('waiting-room').emit('onDeleteRoom', {
+            roomId,
+          })
+        }
+      }
+      this.server.to('waiting-room').emit('onUserLeaveRoom', {
+        roomId,
+      })
+    })
+  }
+
+  @OnEvent('room.join')
+  async handleJoinRoom(payload: {
+    roomId: string
+    member: RelationUserEntity
+  }) {
+    const { roomId, member } = payload
+    this.server
+      .to(`room-${roomId}`)
+      .emit('onUserJoinRoom', { ...member, role: RoomRole.MEMBER })
+
+    this.server.to('waiting-room').emit('onUserJoinRoom', {
+      roomId,
+    })
   }
 }
