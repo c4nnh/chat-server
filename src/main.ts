@@ -7,11 +7,14 @@ import { WebsocketAdapter } from './gateway/gateway.adapter'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
-  app.setGlobalPrefix('api')
-  app.enableCors()
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)))
   const configService = app.get(ConfigService)
+  app.setGlobalPrefix('api')
+  app.enableCors({
+    origin: configService.get<string>('CORS_ORIGIN').split(','),
+  })
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)))
   const adapter = new WebsocketAdapter(app, configService)
+
   app.useWebSocketAdapter(adapter)
   app.useGlobalPipes(
     new ValidationPipe({

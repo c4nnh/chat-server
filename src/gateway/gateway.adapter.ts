@@ -19,10 +19,10 @@ export class WebsocketAdapter extends IoAdapter {
   }
 
   createIOServer(port: number, options?: any) {
-    port = this.configService.get<number>('SOCKET_PORT') || 5000
-    const origins = (
-      this.configService.get<string>('SOCKET_CORS_ORIGIN') || ''
-    ).split(',')
+    port = this.configService.get<number>('SOCKET_PORT') || 5001
+    const origins = (this.configService.get<string>('CORS_ORIGIN') || '').split(
+      ','
+    )
     const server = super.createIOServer(port, {
       ...options,
       cors: {
@@ -50,6 +50,7 @@ export class WebsocketAdapter extends IoAdapter {
         next(new UnauthorizedException('Token is invalid'))
       }
     })
+
     return server
   }
 }
