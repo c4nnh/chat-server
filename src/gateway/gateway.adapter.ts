@@ -1,4 +1,5 @@
 import { INestApplicationContext, UnauthorizedException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { IoAdapter } from '@nestjs/platform-socket.io'
 import { AuthService } from '../auth/auth.service'
 import { TokenPayload } from '../auth/entities/token-payload.entity'
@@ -7,7 +8,10 @@ import { AuthenticatedSocket } from './entities/authenticated-socket.entity'
 export class WebsocketAdapter extends IoAdapter {
   private authService: AuthService
 
-  constructor(private readonly app: INestApplicationContext) {
+  constructor(
+    private readonly app: INestApplicationContext,
+    private readonly configService: ConfigService
+  ) {
     super(app)
     app.resolve<AuthService>(AuthService).then(authService => {
       this.authService = authService
@@ -15,7 +19,16 @@ export class WebsocketAdapter extends IoAdapter {
   }
 
   createIOServer(port: number, options?: any) {
-    const server = super.createIOServer(port, options)
+    port = this.configService.get<number>('SOCKET_PORT') || 5000
+    const origins = (
+      this.configService.get<string>('SOCKET_CORS_ORIGIN') || ''
+    ).split(',')
+    const server = super.createIOServer(port, {
+      ...options,
+      cors: {
+        origins,
+      },
+    })
     server.use(async (socket: AuthenticatedSocket, next) => {
       const authHeader: string = socket.handshake.headers.authorization
 

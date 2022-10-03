@@ -1,4 +1,5 @@
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { NestFactory, Reflector } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { AppModule } from './app.module'
@@ -9,7 +10,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api')
   app.enableCors()
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)))
-  const adapter = new WebsocketAdapter(app)
+  const configService = app.get(ConfigService)
+  const adapter = new WebsocketAdapter(app, configService)
   app.useWebSocketAdapter(adapter)
   app.useGlobalPipes(
     new ValidationPipe({
