@@ -18,7 +18,7 @@ import { PrismaService } from '../db/prisma.service'
 import { RelationUserEntity } from '../users/entities/relation-user.entity'
 import { RoomRole } from '@prisma/client'
 
-@WebSocketGateway(5001)
+@WebSocketGateway()
 export class MessagingGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
