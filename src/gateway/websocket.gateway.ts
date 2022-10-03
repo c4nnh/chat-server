@@ -18,7 +18,7 @@ import { PrismaService } from '../db/prisma.service'
 import { RelationUserEntity } from '../users/entities/relation-user.entity'
 import { RoomRole } from '@prisma/client'
 
-@WebSocketGateway(5000, {
+@WebSocketGateway({
   cors: {
     origin: ['http://localhost:3000', 'http://localhost:3001'],
   },
