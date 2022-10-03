@@ -14,7 +14,7 @@ async function bootstrap() {
   })
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)))
   const adapter = new WebsocketAdapter(app, configService)
-  const port = parseInt(configService.get('PORT') || '50909')
+  const port = parseInt(configService.get('PORT') || '5000')
   console.log(port)
 
   app.useWebSocketAdapter(adapter)
@@ -41,8 +41,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('api', app, document)
 
-  await app.listen(port, '0.0.0.0', () => {
-    console.log(`Server is running on port ${port}`)
-  })
+  await app.listen(port)
+  console.log(`Server is running on port ${port}`)
 }
 bootstrap()
