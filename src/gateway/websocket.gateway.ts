@@ -19,9 +19,10 @@ import { RelationUserEntity } from '../users/entities/relation-user.entity'
 import { RoomRole } from '@prisma/client'
 
 @WebSocketGateway({
-  cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
-  },
+  // cors: {
+  //   origin: ['http://localhost:3000', 'http://localhost:3001'],
+  // },
+  cors: true,
 })
 export class MessagingGateway
   implements OnGatewayConnection, OnGatewayDisconnect
