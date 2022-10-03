@@ -19,10 +19,6 @@ export class WebsocketAdapter extends IoAdapter {
   }
 
   createIOServer(port: number, options?: any) {
-    console.log({ port })
-
-    port = parseInt(this.configService.get('SOCKET_PORT') || '5001')
-
     const origins = (this.configService.get<string>('CORS_ORIGIN') || '').split(
       ','
     )
