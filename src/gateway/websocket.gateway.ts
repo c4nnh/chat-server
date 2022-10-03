@@ -33,6 +33,7 @@ export class MessagingGateway
   }
 
   handleConnection(socket: AuthenticatedSocket) {
+    socket.join(socket.user.userId)
     this.sessions.setSocket(socket.user.userId, socket)
   }
 
@@ -45,8 +46,11 @@ export class MessagingGateway
     userIds: string[]
   }) {
     const { conversation, userIds } = payload
-    const sockets = this.sessions.getSocketsByUsers(userIds)
-    sockets.forEach(item => !!item && item.emit('onConversation', conversation))
+
+    // to update last message in list conversations
+    userIds.forEach(item =>
+      this.server.to(item).emit('onNewConversation', conversation)
+    )
   }
 
   @OnEvent('message.created')
@@ -60,13 +64,15 @@ export class MessagingGateway
       },
     })
 
-    const sockets = this.sessions.getSocketsByUsers(
-      usersInConversation.map(item => item.userId)
+    // to update last message in list conversations
+    usersInConversation.forEach(item =>
+      this.server.to(item.userId).emit('onNewMessage', message)
     )
-    sockets.forEach(item => !!item && item.emit('onMessage', message))
+
+    // to update list messages
     this.server
       .to(`conversation-${message.conversationId}`)
-      .emit('onMessage', message)
+      .emit('onNewMessage', message)
   }
 
   @SubscribeMessage('onJoinConversation')
@@ -113,6 +119,16 @@ export class MessagingGateway
     socket.leave('waiting-room')
   }
 
+  @OnEvent('room.join')
+  async handleJoinRoom(payload: {
+    roomId: string
+    member: RelationUserEntity & { role: RoomRole }
+  }) {
+    const { roomId, member } = payload
+    this.server.to(`room-${roomId}`).emit('onUserJoinRoom', member)
+    this.server.to('waiting-room').emit('onUserJoinRoom', roomId)
+  }
+
   @SubscribeMessage('joinRoom')
   joinRoom(
     @ConnectedSocket() socket: AuthenticatedSocket,
@@ -138,15 +154,15 @@ export class MessagingGateway
           roomId,
         },
       })
-      const joinedRooms = await _prisma.roomMember.findMany({
+      const roomMebers = await _prisma.roomMember.findMany({
         where: {
           roomId,
         },
       })
-      if (joinedRooms.length) {
+      if (roomMebers.length) {
         await _prisma.roomMember.update({
           where: {
-            id: joinedRooms[0].id,
+            id: roomMebers[0].id,
           },
           data: {
             role: 'CREATOR',
@@ -154,7 +170,7 @@ export class MessagingGateway
         })
         this.server.to(`room-${roomId}`).emit('onUserLeaveRoom', {
           userId: socket.user.userId,
-          newCreatorId: joinedRooms[0].userId,
+          newCreatorId: roomMebers[0].userId,
         })
       } else {
         const room = await this.prisma.room.findUnique({
@@ -174,21 +190,6 @@ export class MessagingGateway
       this.server.to('waiting-room').emit('onUserLeaveRoom', {
         roomId,
       })
-    })
-  }
-
-  @OnEvent('room.join')
-  async handleJoinRoom(payload: {
-    roomId: string
-    member: RelationUserEntity
-  }) {
-    const { roomId, member } = payload
-    this.server
-      .to(`room-${roomId}`)
-      .emit('onUserJoinRoom', { ...member, role: RoomRole.MEMBER })
-
-    this.server.to('waiting-room').emit('onUserJoinRoom', {
-      roomId,
     })
   }
 }

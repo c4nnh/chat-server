@@ -111,8 +111,13 @@ export class ConversationsService {
   createConversation = async (
     userId: string,
     dto: CreateConversationDto
-  ): Promise<CreateConversationResponse> => {
-    return this.prisma.$transaction(async _prisma => {
+  ): Promise<CreateConversationResponse> =>
+    this.prisma.$transaction(async _prisma => {
+      const userIds = [...dto.userIds, userId]
+        .filter(
+          (item, index, self) => index === self.findIndex(i => i === item)
+        )
+        .sort()
       const conversations: Conversation[] = await _prisma.$queryRaw`
         SELECT conversation.* 
         FROM 
@@ -120,21 +125,20 @@ export class ConversationsService {
           (
             SELECT "conversationId" FROM user_conversation
             GROUP BY "conversationId"
-            HAVING ARRAY_AGG("userId" ORDER BY "userId") = ${[
-              userId,
-              ...dto.userIds,
-            ].sort()}
+            HAVING ARRAY_AGG("userId" ORDER BY "userId") = ${userIds}
           ) t2
         WHERE conversation.id = t2."conversationId"
+        LIMIT 1
       `
 
       let conversation = conversations.length ? conversations[0] : undefined
+
       if (!conversation) {
         conversation = await _prisma.conversation.create({
           data: {},
         })
         await _prisma.userConversation.createMany({
-          data: [...dto.userIds, userId].map(uid => ({
+          data: userIds.map(uid => ({
             userId: uid,
             conversationId: conversation.id,
             role:
@@ -166,8 +170,6 @@ export class ConversationsService {
         },
       })
 
-      this.eventEmitter.emit('message.created', message)
-
       const res = {
         id: conversation.id,
         name: conversation.name,
@@ -175,12 +177,17 @@ export class ConversationsService {
         lastMessage: message,
       }
 
-      this.eventEmitter.emit('conversation.created', {
-        conversation: res,
-        userIds: [...dto.userIds, userId],
-      })
+      if (conversations.length) {
+        // conversation is existed
+        this.eventEmitter.emit('message.created', message)
+      } else {
+        // conversation is not existed
+        this.eventEmitter.emit('conversation.created', {
+          conversation: res,
+          userIds,
+        })
+      }
 
       return res
     })
-  }
 }

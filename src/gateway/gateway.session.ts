@@ -9,7 +9,7 @@ import { AuthenticatedSocket } from './entities/authenticated-socket.entity'
 export class GatewaySessionManager {
   private readonly sessions: Map<string, AuthenticatedSocket[]> = new Map()
 
-  getSocketsByUsers(userIds: string[]): AuthenticatedSocket[] {
+  private getSocketsByUsers(userIds: string[]): AuthenticatedSocket[] {
     return userIds.map(item => this.sessions.get(item)).flat()
   }
 

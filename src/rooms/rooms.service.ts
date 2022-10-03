@@ -23,9 +23,7 @@ export class RoomsService {
     const { offset: skip, limit: take, gameType, name } = query
 
     const where: Prisma.RoomWhereInput = {
-      game: {
-        type: gameType,
-      },
+      game: gameType,
       name,
     }
 
@@ -39,7 +37,6 @@ export class RoomsService {
         where,
         include: {
           _count: true,
-          game: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -49,13 +46,9 @@ export class RoomsService {
 
     return {
       data: raw.map(item => {
-        const { _count, password, gameId, game, ...rest } = item
+        const { _count, password, ...rest } = item
         return {
           ...rest,
-          game: {
-            ...game,
-            id: gameId,
-          },
           numberOfMember: _count.roomMembers,
           hasPassword: !!password,
         }
@@ -71,13 +64,6 @@ export class RoomsService {
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },
       include: {
-        game: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-          },
-        },
         roomMembers: {
           include: {
             user: {
@@ -154,41 +140,43 @@ export class RoomsService {
 
     const joinedRooms = await this.prisma.roomMember.findMany({
       where: {
-        userId: userId,
+        userId,
       },
     })
 
-    if (joinedRooms.filter(item => item.roomId !== roomId).length) {
+    if (joinedRooms.length) {
       throw new BadRequestException('You are in another room.')
     }
 
-    if (!joinedRooms.filter(item => item.roomId === roomId).length) {
-      const roomMembers = await this.prisma.roomMember.findMany({
-        where: {
-          roomId: roomId,
-        },
-      })
-      const roomMember = await this.prisma.roomMember.create({
-        data: {
-          roomId: roomId,
-          userId: userId,
-          role: roomMembers.length ? 'MEMBER' : 'CREATOR',
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
+    const roomMembers = await this.prisma.roomMember.findMany({
+      where: {
+        roomId,
+      },
+    })
+
+    const roomMember = await this.prisma.roomMember.create({
+      data: {
+        roomId: roomId,
+        userId: userId,
+        role: roomMembers.length ? 'MEMBER' : 'CREATOR',
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
           },
         },
-      })
-      this.eventEmitter.emit('room.join', {
-        roomId,
-        member: roomMember.user,
-      })
-    }
+      },
+    })
+    this.eventEmitter.emit('room.join', {
+      roomId,
+      member: {
+        ...roomMember.user,
+        role: roomMember.role,
+      },
+    })
 
     return true
   }

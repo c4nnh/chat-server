@@ -1,6 +1,5 @@
-import { Room } from '@prisma/client'
+import { GameType, Room } from '@prisma/client'
 import { Exclude } from 'class-transformer'
-import { GameEntity } from '../../games/entities/game.entity'
 
 export class RoomEntity implements Room {
   constructor(partial: Partial<RoomEntity>) {
@@ -25,7 +24,7 @@ export class RoomEntity implements Room {
   @Exclude()
   gameId: string
 
-  game: GameEntity
+  game: GameType
 
   numberOfMember: number
 }

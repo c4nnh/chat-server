@@ -86,28 +86,17 @@ enum GameType {
   BUNNY_JUMP
 }
 
-model Game {
-  id String @id @default(uuid())
-
-  name  String
-  type  GameType
-  rooms Room[]
-
-  @@map("game")
-}
-
 model Room {
   id String @id @default(uuid())
 
   name     String?
   password String?
-  max      Int     @default(4)
+  max      Int      @default(4)
+  game     GameType @default(BUNNY_JUMP)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  game        Game         @relation(fields: [gameId], references: [id])
-  gameId      String
   roomMembers RoomMember[]
 
   @@map("room")
@@ -131,5 +120,6 @@ model RoomMember {
   room   Room   @relation(fields: [roomId], references: [id])
   roomId String
 
+  @@unique([userId, roomId])
   @@map("room_member")
 }

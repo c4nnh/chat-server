@@ -1,6 +1,5 @@
-import { Room } from '@prisma/client'
+import { GameType, Room } from '@prisma/client'
 import { Exclude } from 'class-transformer'
-import { GameEntity } from '../../games/entities/game.entity'
 import { RoomMemberEntity } from './room-member.entity'
 
 export class RoomDetailEntity implements Room {
@@ -21,10 +20,7 @@ export class RoomDetailEntity implements Room {
 
   updatedAt: Date
 
-  @Exclude()
-  gameId: string
-
-  game: GameEntity
+  game: GameType
 
   members: RoomMemberEntity[]
 }

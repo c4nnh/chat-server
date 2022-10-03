@@ -75,6 +75,10 @@ export class AuthService {
       where: { id: payload.userId },
       select,
     })
+    if (!user) {
+      throw new NotFoundException('Your account does not exist')
+    }
+
     return {
       user: new UserEntity(user),
       token: this.genToken(user),
