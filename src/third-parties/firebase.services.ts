@@ -11,7 +11,9 @@ export class FirebaseService {
     this.app = admin.initializeApp({
       credential: admin.credential.cert({
         projectId: this.configService.get('FIREBASE_PROJECT_ID'),
-        privateKey: this.configService.get('FIREBASE_PRIVATE_KEY'),
+        privateKey: this.configService
+          .get('FIREBASE_PRIVATE_KEY')
+          .replace(/\\n/g, '\n'),
         clientEmail: this.configService.get('FIREBASE_CLIENT_EMAIL'),
       }),
       storageBucket: bucketName,
