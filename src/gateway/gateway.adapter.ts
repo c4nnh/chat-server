@@ -19,13 +19,10 @@ export class WebsocketAdapter extends IoAdapter {
   }
 
   createIOServer(port: number, options?: any) {
-    const origins = (this.configService.get<string>('CORS_ORIGIN') || '').split(
-      ','
-    )
     const server = super.createIOServer(port, {
       ...options,
       cors: {
-        origins,
+        origins: '*',
       },
     })
 

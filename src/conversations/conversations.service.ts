@@ -180,13 +180,12 @@ export class ConversationsService {
       if (conversations.length) {
         // conversation is existed
         this.eventEmitter.emit('message.created', message)
-      } else {
-        // conversation is not existed
-        this.eventEmitter.emit('conversation.created', {
-          conversation: res,
-          userIds,
-        })
       }
+
+      this.eventEmitter.emit('conversations.update', {
+        conversation: res,
+        userIds,
+      })
 
       return res
     })

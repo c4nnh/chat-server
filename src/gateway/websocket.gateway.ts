@@ -40,35 +40,20 @@ export class MessagingGateway
   @WebSocketServer()
   server: Server
 
-  @OnEvent('conversation.created')
+  @OnEvent('conversations.update')
   handleConversationCreatedEvent(payload: {
     conversation: ConversationEntity
     userIds: string[]
   }) {
     const { conversation, userIds } = payload
-
     // to update last message in list conversations
     userIds.forEach(item =>
-      this.server.to(item).emit('onNewConversation', conversation)
+      this.server.to(item).emit('onConversationsUpdate', conversation)
     )
   }
 
   @OnEvent('message.created')
   async handleMessageCreatedEvent(message: MessageEntity) {
-    const usersInConversation = await this.prisma.userConversation.findMany({
-      where: {
-        conversationId: message.conversationId,
-      },
-      select: {
-        userId: true,
-      },
-    })
-
-    // to update last message in list conversations
-    usersInConversation.forEach(item =>
-      this.server.to(item.userId).emit('onNewMessage', message)
-    )
-
     // to update list messages
     this.server
       .to(`conversation-${message.conversationId}`)

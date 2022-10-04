@@ -69,16 +69,36 @@ export class MessagesService {
           },
         },
         conversation: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
+          // select: {
+          //   id: true,
+          //   name: true,
+          //   image: true,
+          // },
+          include: {
+            userConversations: {
+              select: {
+                userId: true,
+              },
+            },
           },
         },
       },
     })
 
     this.eventEmitter.emit('message.created', message)
+
+    this.eventEmitter.emit('conversations.update', {
+      conversation: {
+        ...message.conversation,
+        lastMessage: {
+          id: message.id,
+          content: message.content,
+          creator: message.creator,
+          createdAt: message.createdAt,
+        },
+      },
+      userIds: message.conversation.userConversations.map(item => item.userId),
+    })
 
     return message
   }
