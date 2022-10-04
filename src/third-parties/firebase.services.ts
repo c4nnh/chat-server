@@ -30,16 +30,17 @@ export class FirebaseService {
     // if (!bukcet) {
     // }
 
-  //   this.app
-  //     .storage()
-  //     .bucket(bucketName)
-  //     .file('abcd')
-  //     .getSignedUrl({
-  //       version: 'v4',
-  //       action: 'write',
-  //       expires: new Date().getTime() + 1000 * 60 * 60, // 2 minutes
-  //       contentType: 'image/jpeg',
-  //     })
-  //     .then(value => console.log(value))
-  // }
+    //   this.app
+    //     .storage()
+    //     .bucket(bucketName)
+    //     .file('abcd')
+    //     .getSignedUrl({
+    //       version: 'v4',
+    //       action: 'write',
+    //       expires: new Date().getTime() + 1000 * 60 * 60, // 2 minutes
+    //       contentType: 'image/jpeg',
+    //     })
+    //     .then(value => console.log(value))
+    // }
+  }
 }
