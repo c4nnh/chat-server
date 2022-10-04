@@ -10,6 +10,7 @@ import { GatewayModule } from './gateway/gateway.module'
 import { MessagesModule } from './messages/messages.module'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import { RoomsModule } from './rooms/rooms.module'
+import { ThirdPartiesModule } from './third-parties/third-parties.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RoomsModule } from './rooms/rooms.module'
     MessagesModule,
     EventEmitterModule.forRoot(),
     RoomsModule,
+    ThirdPartiesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
