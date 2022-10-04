@@ -9,9 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   const configService = app.get(ConfigService)
   app.setGlobalPrefix('api')
-  app.enableCors({
-    origin: '*',
-  })
+  app.enableCors()
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)))
   const adapter = new WebsocketAdapter(app, configService)
 
