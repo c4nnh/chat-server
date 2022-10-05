@@ -75,7 +75,9 @@ export class FirebaseService {
     const baseUrl = 'https://storage.googleapis.com'
     const projectId = this.configService.get('FIREBASE_PROJECT_ID')
 
-    const imageId = imageUrl.replace(`${baseUrl}/${projectId}.appspot.com/`, '')
+    const reg = new RegExp(`${baseUrl}/${projectId}.appspot.com/`)
+
+    const imageId = imageUrl.replace(reg, '')
 
     await this.app.storage().bucket().file(imageId).delete({
       ignoreNotFound: true,
