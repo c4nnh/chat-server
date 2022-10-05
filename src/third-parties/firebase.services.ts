@@ -40,8 +40,7 @@ export class FirebaseService {
     const bucketName = this.configService.get('FIREBASE_BUCKET_NAME')
     const { fileName, fileType } = dto
 
-    // const id = `${fileName}_${uuid4()}`
-    const id = fileName
+    const id = `${fileName}_${uuid4()}`
 
     const res = await this.app
       .storage()

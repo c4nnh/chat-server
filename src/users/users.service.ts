@@ -31,10 +31,10 @@ export class UsersService {
       data: dto,
     })
 
-    return {
+    return new UserEntity({
       ...user,
       ...dto,
-    }
+    })
   }
 
   getContacts = async (
