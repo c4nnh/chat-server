@@ -1,6 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import admin from 'firebase-admin'
+import { UploadImageDto } from '../images/dto/upload-image.dto'
+import { CreateSignedUrlResponse } from '../images/response/create-signed-url.response'
+import { v4 as uuid4 } from 'uuid'
 
 @Injectable()
 export class FirebaseService {
@@ -16,28 +19,52 @@ export class FirebaseService {
       }),
       storageBucket: bucketName,
     })
+
     this.app
       .storage()
       .bucket(bucketName)
       .setCorsConfiguration([
         {
           origin: ['*'],
+          method: ['*'],
+          maxAgeSeconds: 3600,
+          responseHeader: ['Content-Type', 'Access-Control-Allow-Origin'],
         },
       ])
+      .then(() => {
+        this.app.storage().bucket(bucketName).makePublic()
+      })
+  }
 
-    // if (!bukcet) {
-    // }
+  async createSignedUrl(dto: UploadImageDto): Promise<CreateSignedUrlResponse> {
+    const bucketName = this.configService.get('FIREBASE_BUCKET_NAME')
+    const { fileName, fileType } = dto
 
-    this.app
+    // const id = `${fileName}_${uuid4()}`
+    const id = fileName
+
+    const res = await this.app
       .storage()
       .bucket(bucketName)
-      .file('abcd')
+      .file(id)
       .getSignedUrl({
         version: 'v4',
         action: 'write',
-        expires: new Date().getTime() + 1000 * 60 * 60, // 2 minutes
-        contentType: 'image/jpeg',
+        expires: new Date().getTime() + 1000 * 60 * 1, // 2 minutes
+        contentType: fileType,
       })
-      .then(value => console.log(value))
+
+    if (!res.length) {
+      throw new InternalServerErrorException(
+        'Can not get signed url now. Please try again later'
+      )
+    }
+
+    const url = await this.app.storage().bucket().file(id).publicUrl()
+
+    return {
+      uploadUrl: res[0],
+      publicUrl: url,
+    }
   }
 }

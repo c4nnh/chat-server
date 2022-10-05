@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { convertToPaginationResponse } from '../common/helpers'
 import { PrismaService } from '../db/prisma.service'
 import { GetContactsArgs } from './args/get-contact.args'
+import { UpdateUserDto } from './dto/update-user.dto'
 import { UserEntity } from './entities/user.entity'
 import { GetContactsResponse } from './responses/get-contacts.response'
 
@@ -18,6 +19,22 @@ export class UsersService {
       throw new NotFoundException(`Your account doesn't exist`)
     }
     return new UserEntity(user)
+  }
+
+  update = async (userId: string, dto: UpdateUserDto): Promise<UserEntity> => {
+    const user = await this.me(userId)
+
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: dto,
+    })
+
+    return {
+      ...user,
+      ...dto,
+    }
   }
 
   getContacts = async (
