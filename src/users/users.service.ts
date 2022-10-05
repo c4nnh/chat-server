@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { convertToPaginationResponse } from '../common/helpers'
 import { PrismaService } from '../db/prisma.service'
+import { FirebaseService } from '../third-parties/firebase.services'
 import { GetContactsArgs } from './args/get-contact.args'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { UserEntity } from './entities/user.entity'
@@ -9,7 +10,10 @@ import { GetContactsResponse } from './responses/get-contacts.response'
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly firebaseService: FirebaseService
+  ) {}
 
   me = async (userId: string): Promise<UserEntity> => {
     const user = await this.prisma.user.findUnique({
@@ -30,6 +34,14 @@ export class UsersService {
       },
       data: dto,
     })
+
+    try {
+      const { image } = dto
+
+      if (image) {
+        await this.firebaseService.deleteImage(user.image)
+      }
+    } catch {}
 
     return new UserEntity({
       ...user,

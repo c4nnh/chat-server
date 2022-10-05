@@ -61,9 +61,26 @@ export class FirebaseService {
 
     const url = await this.app.storage().bucket().file(id).publicUrl()
 
+    await this.app.storage().bucket().file(id).delete({
+      ignoreNotFound: true,
+    })
+
     return {
       uploadUrl: res[0],
       publicUrl: url,
     }
+  }
+
+  async deleteImage(imageUrl: string): Promise<boolean> {
+    const baseUrl = 'https://storage.googleapis.com'
+    const projectId = this.configService.get('FIREBASE_PROJECT_ID')
+
+    const imageId = imageUrl.replace(`${baseUrl}/${projectId}.appspot.com/`, '')
+
+    await this.app.storage().bucket().file(imageId).delete({
+      ignoreNotFound: true,
+    })
+
+    return true
   }
 }
