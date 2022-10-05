@@ -33,6 +33,8 @@ export class MessagingGateway
   }
 
   handleConnection(socket: AuthenticatedSocket) {
+    console.log(`connected ${socket.user.userId}`)
+
     socket.join(socket.user.userId)
     this.sessions.setSocket(socket.user.userId, socket)
   }
