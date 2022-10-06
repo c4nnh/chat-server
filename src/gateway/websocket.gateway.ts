@@ -17,6 +17,7 @@ import { ConversationEntity } from '../conversations/entities/conversation.entit
 import { PrismaService } from '../db/prisma.service'
 import { RelationUserEntity } from '../users/entities/relation-user.entity'
 import { RoomRole } from '@prisma/client'
+import { UserEntity } from '../users/entities/user.entity'
 
 @WebSocketGateway()
 export class MessagingGateway
@@ -60,6 +61,26 @@ export class MessagingGateway
     this.server
       .to(`conversation-${message.conversationId}`)
       .emit('onNewMessage', message)
+  }
+
+  @OnEvent('user.update')
+  async handleUserUpdate(user: UserEntity) {
+    delete user.password
+
+    const conversations = await this.prisma.userConversation.findMany({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        conversationId: true,
+      },
+    })
+
+    conversations.forEach(item =>
+      this.server
+        .to(`conversation-${item.conversationId}`)
+        .emit('onUserUpdate', user)
+    )
   }
 
   @SubscribeMessage('onJoinConversation')

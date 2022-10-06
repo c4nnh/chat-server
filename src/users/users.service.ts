@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Prisma } from '@prisma/client'
 import { convertToPaginationResponse } from '../common/helpers'
 import { PrismaService } from '../db/prisma.service'
@@ -12,7 +13,8 @@ import { GetContactsResponse } from './responses/get-contacts.response'
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly firebaseService: FirebaseService
+    private readonly firebaseService: FirebaseService,
+    private readonly eventEmitter: EventEmitter2
   ) {}
 
   me = async (userId: string): Promise<UserEntity> => {
@@ -35,18 +37,19 @@ export class UsersService {
       data: dto,
     })
 
-    try {
-      const { image } = dto
+    const { image } = dto
 
-      if (image) {
-        await this.firebaseService.deleteImage(user.image)
-      }
-    } catch {}
+    if (image) {
+      await this.firebaseService.deleteImage(user.image)
+    }
 
-    return new UserEntity({
+    const res = new UserEntity({
       ...user,
       ...dto,
     })
+    this.eventEmitter.emit('user.update', res)
+
+    return res
   }
 
   getContacts = async (

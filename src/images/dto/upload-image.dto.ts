@@ -1,4 +1,10 @@
-import { IsString } from 'class-validator'
+import { IsEnum, IsString } from 'class-validator'
+
+enum ImageFolder {
+  AVATAR_FOLDER = 'avatars',
+  MESSAGE_FOLDER = 'messages',
+  CONVERSATION_FOLDER = 'conversations',
+}
 
 export class UploadImageDto {
   @IsString()
@@ -6,4 +12,7 @@ export class UploadImageDto {
 
   @IsString()
   fileType: string
+
+  @IsEnum(ImageFolder)
+  folder: ImageFolder
 }

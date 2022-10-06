@@ -38,9 +38,9 @@ export class FirebaseService {
 
   async createSignedUrl(dto: UploadImageDto): Promise<CreateSignedUrlResponse> {
     const bucketName = this.configService.get('FIREBASE_BUCKET_NAME')
-    const { fileName, fileType } = dto
+    const { fileName, fileType, folder } = dto
 
-    const id = `${uuid4()}_${fileName}`
+    const id = `${folder}/${uuid4()}_${fileName}`
 
     const res = await this.app
       .storage()
@@ -72,17 +72,21 @@ export class FirebaseService {
   }
 
   async deleteImage(imageUrl: string): Promise<boolean> {
-    const baseUrl = 'https://storage.googleapis.com'
-    const projectId = this.configService.get('FIREBASE_PROJECT_ID')
+    try {
+      const baseUrl = 'https://storage.googleapis.com'
+      const projectId = this.configService.get('FIREBASE_PROJECT_ID')
 
-    const reg = new RegExp(`${baseUrl}/${projectId}.appspot.com/`)
+      const reg = new RegExp(`${baseUrl}/${projectId}.appspot.com/`)
 
-    const imageId = imageUrl.replace(reg, '')
+      const imageId = imageUrl.replace(reg, '')
 
-    await this.app.storage().bucket().file(imageId).delete({
-      ignoreNotFound: true,
-    })
+      await this.app.storage().bucket().file(imageId).delete({
+        ignoreNotFound: true,
+      })
 
-    return true
+      return true
+    } catch {
+      return false
+    }
   }
 }

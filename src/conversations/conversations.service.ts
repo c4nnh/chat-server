@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common'
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { Conversation, ConversationRole } from '@prisma/client'
 import { convertToPaginationResponse } from '../common/helpers'
 import { PrismaService } from '../db/prisma.service'
@@ -7,6 +11,7 @@ import { CreateConversationDto } from './dto/create-conversation.dto'
 import { CreateConversationResponse } from './response/create-conversation.response'
 import { GetConversationsResponse } from './response/get-conversations.response'
 import { EventEmitter2 } from '@nestjs/event-emitter'
+import { GetConversationDetailResponse } from './response/get-conversation-detail.response'
 
 @Injectable()
 export class ConversationsService {
@@ -106,6 +111,32 @@ export class ConversationsService {
       }),
       pagination: convertToPaginationResponse(total, limit),
     }
+  }
+
+  getOne = async (
+    userId: string,
+    conversationId: string
+  ): Promise<GetConversationDetailResponse> => {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+    })
+
+    if (!conversation) {
+      throw new NotFoundException(`This conversation doesn't exist`)
+    }
+
+    const userConversation = await this.prisma.userConversation.findFirst({
+      where: {
+        userId,
+        conversationId,
+      },
+    })
+
+    if (!userConversation) {
+      throw new ForbiddenException(`You aren't member of this conversation`)
+    }
+
+    return conversation
   }
 
   createConversation = async (
