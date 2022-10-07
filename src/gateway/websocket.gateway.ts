@@ -55,6 +55,18 @@ export class MessagingGateway
     )
   }
 
+  @OnEvent('conversation.information.update')
+  handleConversationInfomationUpdatedEvent(payload: {
+    conversation: ConversationEntity
+    userIds: string[]
+  }) {
+    const { conversation, userIds } = payload
+    // to update last message in list conversations
+    userIds.forEach(item =>
+      this.server.to(item).emit('onConversationInformationUpdate', conversation)
+    )
+  }
+
   @OnEvent('message.created')
   async handleMessageCreatedEvent(message: MessageEntity) {
     // to update list messages

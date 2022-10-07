@@ -80,9 +80,13 @@ export class FirebaseService {
 
       const imageId = imageUrl.replace(reg, '')
 
-      await this.app.storage().bucket().file(imageId).delete({
-        ignoreNotFound: true,
-      })
+      await this.app
+        .storage()
+        .bucket()
+        .file(imageId.replace(/%2F/g, '/'))
+        .delete({
+          ignoreNotFound: true,
+        })
 
       return true
     } catch {

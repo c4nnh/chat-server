@@ -12,12 +12,15 @@ import { CreateConversationResponse } from './response/create-conversation.respo
 import { GetConversationsResponse } from './response/get-conversations.response'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { GetConversationDetailResponse } from './response/get-conversation-detail.response'
+import { UpdateConversationDto } from './dto/update-conversation.dto'
+import { FirebaseService } from '../third-parties/firebase.services'
 
 @Injectable()
 export class ConversationsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly eventEmitter: EventEmitter2
+    private readonly eventEmitter: EventEmitter2,
+    private readonly firebaseService: FirebaseService
   ) {}
 
   getMany = async (
@@ -220,4 +223,37 @@ export class ConversationsService {
 
       return res
     })
+
+  update = async (
+    userId: string,
+    conversationId: string,
+    dto: UpdateConversationDto
+  ): Promise<Conversation> => {
+    const old = await this.getOne(userId, conversationId)
+
+    const conversation = await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: dto,
+      include: {
+        userConversations: {
+          select: {
+            userId: true,
+          },
+        },
+      },
+    })
+
+    this.eventEmitter.emit('conversation.information.update', {
+      conversation,
+      userIds: conversation.userConversations.map(item => item.userId),
+    })
+
+    const { image } = dto
+
+    if (image) {
+      await this.firebaseService.deleteImage(old.image)
+    }
+
+    return conversation
+  }
 }
