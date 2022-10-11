@@ -75,6 +75,9 @@ export class RoomsService {
               },
             },
           },
+          orderBy: {
+            joinAt: 'desc',
+          },
         },
       },
     })
@@ -160,6 +163,7 @@ export class RoomsService {
         roomId: roomId,
         userId: userId,
         role: roomMembers.length ? 'MEMBER' : 'CREATOR',
+        isReady: !roomMembers.length,
       },
       include: {
         user: {
@@ -204,6 +208,7 @@ export class RoomsService {
           roomId: room.id,
           userId,
           role: RoomRole.CREATOR,
+          isReady: true,
         },
       })
 
