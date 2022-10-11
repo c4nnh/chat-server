@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Post,
   Put,
   Query,
   Req,
@@ -11,6 +12,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import { AuthGuard } from '../auth/auth.guard'
 import { GetRoomsArgs } from './args/get-rooms.args'
+import { CreateRoomDto } from './dto/create-room.dto'
 import { JoinRoomDto } from './dto/join-room.dto'
 import { GetRoomDetailResponse } from './response/get-room-detail.response'
 import { GetRoomsResponse } from './response/get-rooms.response'
@@ -43,5 +45,10 @@ export class RoomsController {
     @Body() dto: JoinRoomDto
   ): Promise<boolean> {
     return this.service.joinRoom(req.user.userId, roomId, dto)
+  }
+
+  @Post('rooms')
+  create(@Req() req, @Body() dto: CreateRoomDto): Promise<string> {
+    return this.service.create(req.user.userId, dto)
   }
 }

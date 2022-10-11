@@ -4,10 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import { Prisma } from '@prisma/client'
+import { Prisma, RoomRole } from '@prisma/client'
 import { convertToPaginationResponse } from '../common/helpers'
 import { PrismaService } from '../db/prisma.service'
 import { GetRoomsArgs } from './args/get-rooms.args'
+import { CreateRoomDto } from './dto/create-room.dto'
 import { JoinRoomDto } from './dto/join-room.dto'
 import { GetRoomDetailResponse } from './response/get-room-detail.response'
 import { GetRoomsResponse } from './response/get-rooms.response'
@@ -179,5 +180,34 @@ export class RoomsService {
     })
 
     return true
+  }
+
+  create = async (
+    userId: string,
+    createRoomDto: CreateRoomDto
+  ): Promise<string> => {
+    const joinedRooms = await this.prisma.roomMember.findMany({
+      where: {
+        userId,
+      },
+    })
+
+    if (joinedRooms.length) {
+      throw new BadRequestException('You are in another room.')
+    }
+
+    return this.prisma.$transaction(async _prisma => {
+      const room = await _prisma.room.create({ data: createRoomDto })
+
+      await _prisma.roomMember.create({
+        data: {
+          roomId: room.id,
+          userId,
+          role: RoomRole.CREATOR,
+        },
+      })
+
+      return room.id
+    })
   }
 }
