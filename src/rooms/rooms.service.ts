@@ -21,10 +21,10 @@ export class RoomsService {
   ) {}
 
   getMany = async (query: GetRoomsArgs): Promise<GetRoomsResponse> => {
-    const { offset: skip, limit: take, gameType, name } = query
+    const { offset: skip, limit: take, game, name } = query
 
     const where: Prisma.RoomWhereInput = {
-      game: gameType,
+      game,
       name,
     }
 
@@ -211,6 +211,8 @@ export class RoomsService {
           isReady: true,
         },
       })
+
+      this.eventEmitter.emit('room.create', { room })
 
       return room.id
     })

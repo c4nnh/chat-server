@@ -5,7 +5,7 @@ import { PaginationArgs } from '../../common/args/pagination.args'
 export class GetRoomsArgs extends PaginationArgs {
   @IsNotEmpty()
   @IsEnum(GameType)
-  gameType: GameType
+  game: GameType
 
   @IsString()
   @IsOptional()

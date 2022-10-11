@@ -16,7 +16,7 @@ import { MessageEntity } from '../messages/entities/message.entity'
 import { ConversationEntity } from '../conversations/entities/conversation.entity'
 import { PrismaService } from '../db/prisma.service'
 import { RelationUserEntity } from '../users/entities/relation-user.entity'
-import { RoomRole } from '@prisma/client'
+import { Room, RoomRole } from '@prisma/client'
 import { UserEntity } from '../users/entities/user.entity'
 
 @WebSocketGateway()
@@ -149,6 +149,16 @@ export class MessagingGateway
     this.server.to('waiting-room').emit('onUserJoinRoom', roomId)
   }
 
+  @OnEvent('room.create')
+  async handleCreateRoom(payload: { room: Room }) {
+    const { password, ...rest } = payload.room
+    this.server.to('waiting-room').emit('onNewRoom', {
+      ...rest,
+      hasPassword: !!password,
+      numberOfMember: 1,
+    })
+  }
+
   @SubscribeMessage('joinRoom')
   joinRoom(
     @ConnectedSocket() socket: AuthenticatedSocket,
@@ -186,6 +196,7 @@ export class MessagingGateway
           },
           data: {
             role: 'CREATOR',
+            isReady: true,
           },
         })
         this.server.to(`room-${roomId}`).emit('onUserLeaveRoom', {
