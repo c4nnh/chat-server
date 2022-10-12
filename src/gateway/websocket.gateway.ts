@@ -29,13 +29,22 @@ export class MessagingGateway
     private readonly prisma: PrismaService
   ) {}
 
-  handleDisconnect(socket: AuthenticatedSocket) {
-    this.sessions.disconnect(socket.user.userId, socket.id)
+  async handleDisconnect(socket: AuthenticatedSocket) {
+    const userId = socket.user.userId
+    this.sessions.disconnect(userId, socket.id)
+    const roomMember = await this.prisma.roomMember.findFirst({
+      where: {
+        userId,
+      },
+      select: {
+        roomId: true,
+      },
+    })
+    const { roomId } = roomMember
+    await this.onUserOffline(userId, roomId)
   }
 
   handleConnection(socket: AuthenticatedSocket) {
-    console.log(`connected ${socket.user.userId}`)
-
     socket.join(socket.user.userId)
     this.sessions.setSocket(socket.user.userId, socket)
   }
@@ -177,10 +186,29 @@ export class MessagingGateway
     const { roomId } = payload
     socket.leave(`room-${roomId}`)
 
+    await this.onUserOffline(socket.user.userId, roomId)
+  }
+
+  @OnEvent('user.updateReadyStatus')
+  async handleUserUpdateReadyStatus(payload: {
+    roomId: string
+    userId: string
+    isReady: boolean
+  }) {
+    const { roomId, userId, isReady } = payload
+
+    if (isReady) {
+      this.server.to(`room-${roomId}`).emit('onUserReady', { userId })
+    } else {
+      this.server.to(`room-${roomId}`).emit('onUserUnready', { userId })
+    }
+  }
+
+  private onUserOffline = async (userId: string, roomId: string) => {
     await this.prisma.$transaction(async _prisma => {
       await _prisma.roomMember.deleteMany({
         where: {
-          userId: socket.user.userId,
+          userId,
           roomId,
         },
       })
@@ -200,7 +228,7 @@ export class MessagingGateway
           },
         })
         this.server.to(`room-${roomId}`).emit('onUserLeaveRoom', {
-          userId: socket.user.userId,
+          userId,
           newCreatorId: roomMembers[0].userId,
         })
       } else {
@@ -222,20 +250,5 @@ export class MessagingGateway
         roomId,
       })
     })
-  }
-
-  @OnEvent('user.updateReadyStatus')
-  async handleUserUpdateReadyStatus(payload: {
-    roomId: string
-    userId: string
-    isReady: boolean
-  }) {
-    const { roomId, userId, isReady } = payload
-
-    if (isReady) {
-      this.server.to(`room-${roomId}`).emit('onUserReady', { userId })
-    } else {
-      this.server.to(`room-${roomId}`).emit('onUserUnready', { userId })
-    }
   }
 }
