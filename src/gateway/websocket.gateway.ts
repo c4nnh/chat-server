@@ -40,8 +40,10 @@ export class MessagingGateway
         roomId: true,
       },
     })
-    const { roomId } = roomMember
-    await this.onUserOffline(userId, roomId)
+
+    if (roomMember) {
+      await this.onUserOffline(userId, roomMember.roomId)
+    }
   }
 
   handleConnection(socket: AuthenticatedSocket) {
