@@ -56,7 +56,7 @@ export class MessagingGateway
   }
 
   @OnEvent('conversation.information.update')
-  handleConversationInfomationUpdatedEvent(payload: {
+  handleConversationInformationUpdatedEvent(payload: {
     conversation: ConversationEntity
     userIds: string[]
   }) {
@@ -184,15 +184,15 @@ export class MessagingGateway
           roomId,
         },
       })
-      const roomMebers = await _prisma.roomMember.findMany({
+      const roomMembers = await _prisma.roomMember.findMany({
         where: {
           roomId,
         },
       })
-      if (roomMebers.length) {
+      if (roomMembers.length) {
         await _prisma.roomMember.update({
           where: {
-            id: roomMebers[0].id,
+            id: roomMembers[0].id,
           },
           data: {
             role: 'CREATOR',
@@ -201,7 +201,7 @@ export class MessagingGateway
         })
         this.server.to(`room-${roomId}`).emit('onUserLeaveRoom', {
           userId: socket.user.userId,
-          newCreatorId: roomMebers[0].userId,
+          newCreatorId: roomMembers[0].userId,
         })
       } else {
         const room = await this.prisma.room.findUnique({
@@ -222,5 +222,20 @@ export class MessagingGateway
         roomId,
       })
     })
+  }
+
+  @OnEvent('user.updateReadyStatus')
+  async handleUserUpdateReadyStatus(payload: {
+    roomId: string
+    userId: string
+    isReady: boolean
+  }) {
+    const { roomId, userId, isReady } = payload
+
+    if (isReady) {
+      this.server.to(`room-${roomId}`).emit('onUserReady', { userId })
+    } else {
+      this.server.to(`room-${roomId}`).emit('onUserUnready', { userId })
+    }
   }
 }

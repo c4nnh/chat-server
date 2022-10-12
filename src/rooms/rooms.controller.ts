@@ -14,6 +14,7 @@ import { AuthGuard } from '../auth/auth.guard'
 import { GetRoomsArgs } from './args/get-rooms.args'
 import { CreateRoomDto } from './dto/create-room.dto'
 import { JoinRoomDto } from './dto/join-room.dto'
+import { UpdateReadyStatusDto } from './dto/update-ready-status.dto'
 import { GetRoomDetailResponse } from './response/get-room-detail.response'
 import { GetRoomsResponse } from './response/get-rooms.response'
 import { RoomsService } from './rooms.service'
@@ -50,5 +51,14 @@ export class RoomsController {
   @Post('rooms')
   create(@Req() req, @Body() dto: CreateRoomDto): Promise<string> {
     return this.service.create(req.user.userId, dto)
+  }
+
+  @Put('update-ready-status/:id')
+  updateReadyStatus(
+    @Req() req,
+    @Param('id') roomId: string,
+    @Body() dto: UpdateReadyStatusDto
+  ): Promise<boolean> {
+    return this.service.updateReadyStatus(req.user.userId, roomId, dto)
   }
 }

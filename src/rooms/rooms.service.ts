@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
@@ -10,6 +11,7 @@ import { PrismaService } from '../db/prisma.service'
 import { GetRoomsArgs } from './args/get-rooms.args'
 import { CreateRoomDto } from './dto/create-room.dto'
 import { JoinRoomDto } from './dto/join-room.dto'
+import { UpdateReadyStatusDto } from './dto/update-ready-status.dto'
 import { GetRoomDetailResponse } from './response/get-room-detail.response'
 import { GetRoomsResponse } from './response/get-rooms.response'
 
@@ -216,5 +218,45 @@ export class RoomsService {
 
       return room.id
     })
+  }
+
+  updateReadyStatus = async (
+    userId: string,
+    roomId: string,
+    dto: UpdateReadyStatusDto
+  ): Promise<boolean> => {
+    const room = await this.prisma.room.findUnique({ where: { id: roomId } })
+
+    if (!room) {
+      throw new NotFoundException('This room does not exist')
+    }
+
+    const roomMember = await this.prisma.roomMember.findFirst({
+      where: {
+        userId: userId,
+        roomId,
+      },
+    })
+
+    if (!roomMember) {
+      throw new ForbiddenException('You are not member of this room')
+    }
+
+    await this.prisma.roomMember.update({
+      where: {
+        id: roomMember.id,
+      },
+      data: dto,
+    })
+
+    const { isReady } = dto
+
+    this.eventEmitter.emit('user.updateReadyStatus', {
+      roomId,
+      userId,
+      isReady,
+    })
+
+    return true
   }
 }
