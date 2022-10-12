@@ -38,7 +38,7 @@ export class WebsocketAdapter extends IoAdapter {
         return next(new UnauthorizedException('Token is invalid'))
 
       try {
-        const user: TokenPayload = this.authService.verifyToken(
+        const user: TokenPayload = await this.authService.verifyToken(
           match.groups.token
         )
         socket.user = user

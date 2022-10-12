@@ -89,6 +89,7 @@ enum GameType {
 model Room {
   id String @id @default(uuid())
 
+  code     Int      @default(autoincrement())
   name     String?
   password String?
   max      Int      @default(4)

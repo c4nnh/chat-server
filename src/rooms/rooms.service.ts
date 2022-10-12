@@ -87,7 +87,7 @@ export class RoomsService {
     if (!room) {
       throw new NotFoundException('This room does not exist')
     }
-    const { id, name, game, roomMembers, createdAt, updatedAt } = room
+    const { id, name, game, code, roomMembers, createdAt, updatedAt } = room
 
     const joinedRooms = await this.prisma.roomMember.findMany({
       where: {
@@ -102,6 +102,7 @@ export class RoomsService {
     return {
       id,
       name,
+      code,
       game,
       createdAt,
       updatedAt,

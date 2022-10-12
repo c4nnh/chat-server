@@ -6,6 +6,7 @@ export class RoomDetailEntity implements Room {
   constructor(partial: Partial<RoomDetailEntity>) {
     Object.assign(this, partial)
   }
+  code: number
 
   id: string
 

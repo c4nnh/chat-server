@@ -15,7 +15,7 @@ export class AuthGuard implements CanActivate {
     private readonly reflector: Reflector
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest()
 
     const authHeader: string = request.headers.authorization
@@ -24,7 +24,9 @@ export class AuthGuard implements CanActivate {
     }
     const match = authHeader.match(/^Bearer (?<token>.+)$/)
     if (!match || !match.groups.token) return false
-    const user: TokenPayload = this.authService.verifyToken(match.groups.token)
+    const user: TokenPayload = await this.authService.verifyToken(
+      match.groups.token
+    )
 
     if (!user) return false
     request.user = user

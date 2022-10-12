@@ -70,7 +70,7 @@ export class AuthService {
   }
 
   refreshToken = async (refreshToken: string): Promise<LoginResponse> => {
-    const payload: TokenPayload = this.verifyToken(refreshToken)
+    const payload: TokenPayload = await this.verifyToken(refreshToken)
     const user = await this.prisma.user.findUnique({
       where: { id: payload.userId },
       select,
@@ -101,11 +101,19 @@ export class AuthService {
   hashPassword = (password: string): string =>
     createHash('md5').update(password).digest('hex')
 
-  verifyToken = (token: string): TokenPayload => {
+  verifyToken = async (token: string): Promise<TokenPayload> => {
     try {
-      return this.jwtService.verify(token)
+      const payload: TokenPayload = this.jwtService.verify(token)
+      const { userId } = payload
+
+      const user = await this.prisma.user.findUnique({ where: { id: userId } })
+      if (!user) {
+        throw new UnauthorizedException('Token is invalid')
+      }
+
+      return payload
     } catch (e) {
-      throw new UnauthorizedException('Token is invalid', 'EXPIRED_TOKEN')
+      throw new UnauthorizedException('Token is invalid')
     }
   }
 }
